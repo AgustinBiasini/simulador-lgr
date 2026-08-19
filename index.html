@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LGR plano Z - generalizado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0A0E13;
+    --panel:#10161D;
+    --panel-2:#141B23;
+    --grid:rgba(148,166,184,0.08);
+    --grid-strong:rgba(148,166,184,0.18);
+    --axis:#4A5A6A;
+    --text:#E7EDF3;
+    --text-dim:#8A99A8;
+    --text-faint:#5C6B7A;
+    --amber:#FFB020;
+    --amber-dim:rgba(255,176,32,0.18);
+    --cyan:#45D9C8;
+    --cyan-dim:rgba(69,217,200,0.18);
+    --magenta:#F0629A;
+    --magenta-dim:rgba(240,98,154,0.16);
+    --violet:#8B7FE8;
+    --violet-dim:rgba(139,127,232,0.16);
+    --white:#F4F7FA;
+    --point-halo:rgba(244,247,250,0.35);
+    --circle-glow:rgba(244,247,250,0.55);
+  }
+  [data-theme="light"]{
+    color-scheme: light;
+    --bg:#EEF1F4;
+    --panel:#FFFFFF;
+    --panel-2:#F6F8FA;
+    --grid:rgba(30,42,56,0.07);
+    --grid-strong:rgba(30,42,56,0.20);
+    --axis:#5C6B7A;
+    --text:#161E27;
+    --text-dim:#4C5A68;
+    --text-faint:#7A8896;
+    --amber:#C97A00;
+    --amber-dim:rgba(201,122,0,0.14);
+    --cyan:#0B8B80;
+    --cyan-dim:rgba(11,139,128,0.14);
+    --magenta:#B23370;
+    --magenta-dim:rgba(178,51,112,0.13);
+    --violet:#5B4FC4;
+    --violet-dim:rgba(91,79,196,0.13);
+    --white:#0F1620;
+    --point-halo:rgba(15,22,32,0.22);
+    --circle-glow:rgba(15,22,32,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:'JetBrains Mono',ui-monospace,monospace;transition:background .2s ease,color .2s ease;}
+  .panel,.controls,.status{transition:background .2s ease,border-color .2s ease;}
+  body{padding:28px 20px 60px;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header{margin-bottom:26px;border-bottom:1px solid rgba(148,166,184,0.14);padding-bottom:18px;}
+  .header-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .eyebrow{font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint);margin-bottom:0;}
+  .theme-toggle{display:flex;align-items:center;gap:7px;background:rgba(148,166,184,0.08);
+    border:1px solid rgba(148,166,184,0.18);color:var(--text-dim);font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:0.03em;padding:7px 12px;border-radius:20px;cursor:pointer;
+    transition:all .15s ease;flex-shrink:0;}
+  .theme-toggle:hover{background:rgba(148,166,184,0.16);color:var(--text);border-color:rgba(148,166,184,0.32);}
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(24px,4vw,34px);
+    margin:0 0 8px;letter-spacing:-0.01em;color:var(--white);}
+  h1 .z{color:var(--cyan);}
+  .sub{color:var(--text-dim);font-size:13.5px;line-height:1.6;max-width:760px;}
+  .sub code{color:var(--text);background:rgba(148,166,184,0.1);padding:1px 5px;border-radius:3px;}
+
+  .stage{display:grid;grid-template-columns:minmax(300px,560px) 1fr;gap:16px;margin-bottom:18px;align-items:start;}
+  @media(max-width:900px){.stage{grid-template-columns:1fr;}}
+
+  .legend-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed rgba(148,166,184,0.1);}
+  .legend-item:last-child{border-bottom:none;}
+  .legend-icon{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .legend-text{font-size:12px;color:var(--text-dim);line-height:1.4;}
+  .legend-text b{color:var(--text);font-weight:600;display:block;font-size:12.5px;}
+
+  .panel{background:var(--panel);border:1px solid rgba(148,166,184,0.12);border-radius:10px;
+    padding:14px 14px 10px;position:relative;overflow:hidden;}
+  .panel-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .panel-title h2{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;margin:0;
+    color:var(--text);letter-spacing:0.01em;}
+  .panel-title .tag{font-size:10.5px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase;}
+  canvas{display:block;width:100%;height:auto;border-radius:6px;background:var(--panel-2);
+    max-width:560px;aspect-ratio:1/1;margin:0 auto;}
+  .resp-canvas{max-width:none;aspect-ratio:auto;height:200px;margin:0;}
+  .resp-sub-title{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;}
+  .resp-readout{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--text-dim);}
+  .resp-readout b{color:var(--white);}
+  .readout-line{position:absolute;left:14px;bottom:10px;right:14px;display:flex;justify-content:space-between;
+    font-size:11px;color:var(--text-dim);pointer-events:none;flex-wrap:wrap;gap:4px 10px;}
+  .readout-line b{color:var(--white);font-weight:600;}
+
+  .lower{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;}
+  @media(max-width:840px){.lower{grid-template-columns:1fr;}}
+
+  .controls, .status{background:var(--panel);border:1px solid rgba(148,166,184,0.12);border-radius:10px;padding:18px 20px;}
+
+  .count-row{display:flex;gap:10px;margin-bottom:18px;}
+  .count-box{flex:1;}
+  .count-box label{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:var(--text);
+    display:block;margin-bottom:6px;}
+  .count-box select{width:100%;background:rgba(148,166,184,0.08);border:1px solid rgba(148,166,184,0.2);
+    color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:7px 8px;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:16px;}
+  .tab-btn{flex:1;background:rgba(148,166,184,0.06);border:1px solid rgba(148,166,184,0.14);
+    color:var(--text-dim);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;
+    padding:8px 6px;border-radius:6px;cursor:pointer;transition:all .15s ease;}
+  .tab-btn.active{background:var(--violet-dim);color:var(--violet);border-color:rgba(139,127,232,0.4);}
+  .val.zeta{color:#5FD3A2;}
+  .val.sigma{color:#5AA9E6;}
+  .val.omega{color:#FF8B5E;}
+
+  .tf-box{flex:1;min-width:150px;background:rgba(148,166,184,0.05);border:1px solid rgba(148,166,184,0.1);
+    border-radius:8px;padding:12px 10px;text-align:center;}
+  .tf-label{font-family:'Space Grotesk',sans-serif;font-size:11.5px;font-weight:600;color:var(--text-dim);margin-bottom:8px;}
+  .tf-frac{display:inline-flex;flex-direction:column;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);}
+  .tf-num,.tf-den{padding:2px 4px;white-space:nowrap;}
+  .tf-bar{width:100%;height:1.5px;background:var(--text-dim);margin:3px 0;}
+
+  .ctrl-group{margin-bottom:16px;}
+  .ctrl-group:last-child{margin-bottom:0;}
+  .ctrl-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;gap:8px;}
+  .ctrl-head label{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--text);}
+  .ctrl-row{display:flex;align-items:center;gap:8px;}
+  .ctrl-row input[type=range]{flex:1;}
+  .num-in{width:64px;background:rgba(148,166,184,0.08);border:1px solid rgba(148,166,184,0.2);
+    color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:5px;padding:5px 6px;}
+  .val{font-size:13px;font-weight:600;padding:2px 8px;border-radius:4px;background:rgba(148,166,184,0.08);}
+  .val.amber{color:var(--amber);} .val.cyan{color:var(--cyan);} .val.white2{color:var(--text-dim);}
+  .val.magenta{color:var(--magenta);} .val.white{color:var(--white);}
+
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+    background:rgba(148,166,184,0.16);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:var(--accent,#fff);border:2px solid #0A0E13;cursor:pointer;box-shadow:0 0 0 2px rgba(255,255,255,0.15);}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent,#fff);
+    border:2px solid #0A0E13;cursor:pointer;}
+
+  .hint{font-size:11px;color:var(--text-faint);margin-top:5px;line-height:1.5;}
+
+  .toggles{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+  .toggle{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-dim);cursor:pointer;
+    user-select:none;padding:7px 10px;border-radius:6px;background:rgba(148,166,184,0.05);
+    border:1px solid rgba(148,166,184,0.08);}
+  .toggle input{width:14px;height:14px;accent-color:var(--sw,#fff);cursor:pointer;}
+  .swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .toggle span.lbl{color:var(--text);font-weight:500;}
+  .toggle small{color:var(--text-faint);display:block;font-weight:400;}
+
+  .divider{height:1px;background:rgba(148,166,184,0.1);margin:18px 0;}
+
+  .status h2{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;margin:0 0 14px;color:var(--text);}
+  .stat-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;
+    border-bottom:1px dashed rgba(148,166,184,0.1);font-size:12.5px;gap:8px;}
+  .stat-row:last-child{border-bottom:none;}
+  .stat-row .k{color:var(--text-dim);}
+  .stat-row .v{color:var(--white);font-weight:600;text-align:right;}
+  .strip-badge{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:6px;font-size:11.5px;
+    font-weight:600;letter-spacing:0.03em;text-align:center;width:100%;}
+  .strip-badge.ok{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(69,217,200,0.35);}
+  .strip-badge.marg{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,176,32,0.35);}
+  .strip-badge.bad{background:rgba(240,98,154,0.14);color:var(--magenta);border:1px solid rgba(240,98,154,0.35);}
+
+  .kcrit-btn{width:100%;margin-top:14px;background:var(--violet-dim);border:1px solid rgba(139,127,232,0.4);
+    color:var(--violet);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;
+    padding:11px 10px;border-radius:8px;cursor:pointer;transition:all .15s ease;}
+  .kcrit-btn:hover{background:rgba(139,127,232,0.26);}
+  .kcrit-box{margin-top:12px;padding:12px 14px;border-radius:8px;background:rgba(148,166,184,0.05);
+    border:1px solid rgba(148,166,184,0.1);font-size:12px;line-height:1.7;}
+  .kcrit-box .line{display:flex;justify-content:space-between;gap:8px;}
+  .kcrit-box .v{color:var(--white);font-weight:600;}
+  .kcrit-box .formula{color:var(--text-faint);margin-top:6px;font-size:11px;}
+
+  footer{margin-top:22px;font-size:11px;color:var(--text-faint);line-height:1.7;}
+  footer code{color:var(--text-dim);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="header-top">
+      <div class="eyebrow">Teoria de Control II - FCEyT - UNSE</div>
+      <button id="themeToggle" class="theme-toggle" aria-label="Cambiar tema claro/oscuro">
+        <span id="themeIcon">☀</span><span id="themeLabel">Tema claro</span>
+      </button>
+    </div>
+    <h1>Lugar geometrico de raices - plano <span class="z">z</span></h1>
+    <div class="sub">Elegi cuantos polos y ceros usar (todos sobre el eje real). Ubicalos con los deslizadores,
+      subi <code>K</code> y mira el LGR completo. El boton calcula el <code>K</code> critico con el criterio
+      del modulo en el punto donde el lugar geometrico cruza <code>|z| = 1</code>.</div>
+  </header>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-title"><h2>Plano z</h2><span class="tag">Im vs Re</span></div>
+      <canvas id="zCanvas"></canvas>
+      <div class="readout-line"><span>polos: <b id="polesVal">—</b></span><span id="stabHint">—</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><h2>Respuesta en el tiempo</h2><span class="tag">c(kT)</span></div>
+
+      <div class="tabs" style="margin-bottom:14px;">
+        <button class="tab-btn active" id="btnStep" data-kind="step">Escalon</button>
+        <button class="tab-btn" id="btnRamp" data-kind="ramp">Rampa</button>
+        <button class="tab-btn" id="btnParab" data-kind="parabola">Parabola</button>
+      </div>
+
+      <div class="resp-sub-title">Discreto - c(kT)</div>
+      <canvas id="discreteCanvas" class="resp-canvas"></canvas>
+      <div class="resp-readout">
+        <span>c(kT) final: <b id="discreteFinal">—</b></span>
+        <span id="discreteHint">—</span>
+      </div>
+
+      <div class="resp-sub-title" style="margin-top:16px;">Continuo - c(t) interpolado</div>
+      <canvas id="continuousCanvas" class="resp-canvas"></canvas>
+      <div class="resp-readout">
+        <span>c(t) final: <b id="continuousFinal">—</b></span>
+        <span id="continuousHint">—</span>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="lower">
+    <div class="controls">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="sing">Singularidades</button>
+          <button class="tab-btn" data-tab="carac">Caracteristicas z</button>
+        </div>
+
+        <div id="tab-sing" class="tab-content">
+          <div class="count-row">
+            <div class="count-box">
+              <label for="numPoles">Cantidad de polos</label>
+              <select id="numPoles"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
+            </div>
+            <div class="count-box">
+              <label for="numZeros">Cantidad de ceros</label>
+              <select id="numZeros"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option></select>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <div class="ctrl-head"><label for="K">K - ganancia de lazo</label><span class="val white" id="KOut">0.00</span></div>
+            <div class="ctrl-row">
+              <input type="range" id="K" min="0" max="8" step="0.01" value="0" style="--accent:#F4F7FA;">
+              <input type="number" id="KNum" class="num-in" min="0" max="8" step="0.01" value="0">
+            </div>
+          </div>
+
+          <div id="poleRows"></div>
+          <div id="zeroRows"></div>
+
+          <div class="divider"></div>
+
+          <div class="toggles">
+            <label class="toggle" style="--sw:#8B7FE8"><input type="checkbox" id="toggleRamas" checked>
+              <span class="swatch" style="background:#8B7FE8"></span>
+              <span><span class="lbl">Ramas del LGR</span><small>trazado por barrido de K</small></span></label>
+            <label class="toggle" style="--sw:#FFB020"><input type="checkbox" id="toggleAsintota" checked>
+              <span class="swatch" style="background:#FFB020"></span>
+              <span><span class="lbl">Asintotas</span><small>direccion cuando K → ∞</small></span></label>
+          </div>
+        </div>
+
+        <div id="tab-carac" class="tab-content" style="display:none;">
+          <div class="ctrl-group">
+            <div class="ctrl-head"><label for="sigma">σ - atenuacion constante</label><span class="val sigma" id="sigmaOut">0.30</span></div>
+            <div class="ctrl-row">
+              <input type="range" id="sigma" min="-1" max="3" step="0.01" value="0.3" style="--accent:#5AA9E6;">
+              <input type="number" id="sigmaNum" class="num-in" min="-1" max="3" step="0.01" value="0.3">
+            </div>
+            <div class="hint">Recta vertical σ = cte en el plano s se transforma en un circulo centrado en el origen de radio e^(−σT) (T = 1).</div>
+          </div>
+          <label class="toggle" style="--sw:#5AA9E6"><input type="checkbox" id="toggleSigma">
+            <span class="swatch" style="background:#5AA9E6"></span>
+            <span><span class="lbl">Graficar circulo σ</span><small>atenuacion constante</small></span></label>
+
+          <div class="ctrl-group" style="margin-top:18px;">
+            <div class="ctrl-head"><label for="omega">ω - frecuencia constante</label><span class="val omega" id="omegaOut">0.79</span></div>
+            <div class="ctrl-row">
+              <input type="range" id="omega" min="0" max="3.14" step="0.01" value="0.785" style="--accent:#FF8B5E;">
+              <input type="number" id="omegaNum" class="num-in" min="0" max="3.14" step="0.01" value="0.79">
+            </div>
+            <div class="hint">Recta horizontal ω = cte en el plano s se transforma en una recta radial desde el origen, con angulo ωT (T = 1).</div>
+          </div>
+          <label class="toggle" style="--sw:#FF8B5E"><input type="checkbox" id="toggleOmega">
+            <span class="swatch" style="background:#FF8B5E"></span>
+            <span><span class="lbl">Graficar recta ω</span><small>frecuencia constante</small></span></label>
+
+          <div class="ctrl-group" style="margin-top:18px;">
+            <div class="ctrl-head"><label for="zeta">ζ - amortiguamiento relativo</label><span class="val zeta" id="zetaOut">0.50</span></div>
+            <div class="ctrl-row">
+              <input type="range" id="zeta" min="0" max="0.98" step="0.01" value="0.5" style="--accent:#5FD3A2;">
+              <input type="number" id="zetaNum" class="num-in" min="0" max="0.98" step="0.01" value="0.5">
+            </div>
+            <div class="hint">Recta de angulo arccos(ζ) en el plano s se transforma en una espiral logaritmica en el plano z (T = 1).</div>
+          </div>
+          <label class="toggle" style="--sw:#5FD3A2"><input type="checkbox" id="toggleZeta">
+            <span class="swatch" style="background:#5FD3A2"></span>
+            <span><span class="lbl">Graficar espiral ζ</span><small>amortiguamiento constante</small></span></label>
+        </div>
+    </div>
+
+    <div class="status">
+      <h2>Lectura numerica</h2>
+      <div id="rootsStatus"></div>
+      <div class="stat-row"><span class="k">|z| maximo</span><span class="v" id="statMaxMod">—</span></div>
+      <div id="stabBadge" class="strip-badge ok">Estable</div>
+
+      <button id="kcritBtn" class="kcrit-btn">Calcular K critico (criterio del modulo)</button>
+      <div id="kcritBox" class="kcrit-box" style="display:none;"></div>
+
+      <div class="divider"></div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Funcion de transferencia</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        <div class="tf-box">
+          <div class="tf-label">G(z)</div>
+          <div class="tf-frac">
+            <div class="tf-num" id="eqGzNum">—</div>
+            <div class="tf-bar"></div>
+            <div class="tf-den" id="eqGzDen">—</div>
+          </div>
+        </div>
+        <div class="tf-box">
+          <div class="tf-label">C(z) / R(z)</div>
+          <div class="tf-frac">
+            <div class="tf-num" id="eqCzNum">—</div>
+            <div class="tf-bar"></div>
+            <div class="tf-den" id="eqCzDen">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">Diagrama en bloques</div>
+      <svg viewBox="0 0 380 150" style="width:100%;height:auto;max-width:360px;margin:0 auto;display:block;">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" style="fill:var(--text-dim);"></path>
+          </marker>
+        </defs>
+
+        <line x1="4" y1="55" x2="34" y2="55" style="stroke:var(--text-dim);stroke-width:1.6;" marker-end="url(#arrow)"></line>
+        <text x="2" y="46" style="font-family:'Space Grotesk',sans-serif;font-size:11px;fill:var(--text);">R</text>
+
+        <circle cx="46" cy="55" r="11" style="fill:var(--panel-2);stroke:var(--text-dim);stroke-width:1.6;"></circle>
+        <line x1="41" y1="50" x2="51" y2="60" style="stroke:var(--text-dim);stroke-width:1.1;"></line>
+        <line x1="41" y1="60" x2="51" y2="50" style="stroke:var(--text-dim);stroke-width:1.1;"></line>
+        <text x="50" y="47" style="font-family:'JetBrains Mono',monospace;font-size:9px;fill:var(--text-dim);">+</text>
+        <text x="34" y="68" style="font-family:'JetBrains Mono',monospace;font-size:9px;fill:var(--text-dim);">−</text>
+
+        <line x1="57" y1="55" x2="90" y2="55" style="stroke:var(--text-dim);stroke-width:1.6;" marker-end="url(#arrow)"></line>
+        <text x="68" y="46" style="font-family:'Space Grotesk',sans-serif;font-size:11px;fill:var(--text);">e</text>
+
+        <rect x="90" y="33" width="76" height="42" rx="7" style="fill:var(--panel-2);stroke:var(--amber);stroke-width:1.6;"></rect>
+        <text x="128" y="58" text-anchor="middle" style="font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;fill:var(--text);">Controlador</text>
+
+        <line x1="166" y1="55" x2="196" y2="55" style="stroke:var(--text-dim);stroke-width:1.6;" marker-end="url(#arrow)"></line>
+        <text x="177" y="46" style="font-family:'Space Grotesk',sans-serif;font-size:11px;fill:var(--text);">u</text>
+
+        <rect x="196" y="33" width="76" height="42" rx="7" style="fill:var(--panel-2);stroke:var(--cyan);stroke-width:1.6;"></rect>
+        <text x="234" y="58" text-anchor="middle" style="font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;fill:var(--text);">Planta</text>
+
+        <line x1="272" y1="55" x2="330" y2="55" style="stroke:var(--text-dim);stroke-width:1.6;" marker-end="url(#arrow)"></line>
+        <text x="304" y="46" style="font-family:'Space Grotesk',sans-serif;font-size:11px;fill:var(--text);">C</text>
+        <circle cx="296" cy="55" r="3" style="fill:var(--text-dim);"></circle>
+
+        <line x1="296" y1="55" x2="296" y2="105" style="stroke:var(--text-dim);stroke-width:1.6;"></line>
+        <line x1="296" y1="105" x2="272" y2="105" style="stroke:var(--text-dim);stroke-width:1.6;" marker-end="url(#arrow)"></line>
+
+        <rect x="196" y="90" width="76" height="30" rx="7" style="fill:var(--panel-2);stroke:var(--violet);stroke-width:1.6;"></rect>
+        <text x="234" y="109" text-anchor="middle" style="font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;fill:var(--text);">Sensor</text>
+
+        <line x1="196" y1="105" x2="46" y2="105" style="stroke:var(--text-dim);stroke-width:1.6;"></line>
+        <line x1="46" y1="105" x2="46" y2="68" style="stroke:var(--text-dim);stroke-width:1.6;" marker-end="url(#arrow)"></line>
+      </svg>
+    </div>
+  </div>
+
+  <footer>
+    Ecuacion caracteristica: <code>prod(z-pi) + K*prod(z-zi) = 0</code>, grado igual a la cantidad de polos
+    (hasta 3, con solucion cerrada por formula de Cardano). El K critico se busca barriendo K y aplicando biseccion
+    sobre el primer cruce de <code>|z| = 1</code>, y se confirma con el criterio del modulo en ese punto.
+  </footer>
+</div>
+
+<script>
+const zCanvas = document.getElementById('zCanvas');
+const zCtx = zCanvas.getContext('2d');
+const discreteCanvas = document.getElementById('discreteCanvas');
+const discreteCtx = discreteCanvas.getContext('2d');
+const continuousCanvas = document.getElementById('continuousCanvas');
+const continuousCtx = continuousCanvas.getContext('2d');
+const btnStep = document.getElementById('btnStep');
+const btnRamp = document.getElementById('btnRamp');
+const btnParab = document.getElementById('btnParab');
+let inputKind = 'step';
+[btnStep, btnRamp, btnParab].forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    inputKind = btn.dataset.kind;
+    [btnStep,btnRamp,btnParab].forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+});
+
+const numPolesEl = document.getElementById('numPoles');
+const numZerosEl = document.getElementById('numZeros');
+const poleRows = document.getElementById('poleRows');
+const zeroRows = document.getElementById('zeroRows');
+const KEl = document.getElementById('K'), KNum = document.getElementById('KNum');
+
+const toggleRamas = document.getElementById('toggleRamas');
+const toggleAsintota = document.getElementById('toggleAsintota');
+const kcritBtn = document.getElementById('kcritBtn');
+const kcritBox = document.getElementById('kcritBox');
+const zetaEl = document.getElementById('zeta'), zetaNum = document.getElementById('zetaNum'), zetaOut = document.getElementById('zetaOut');
+const toggleZeta = document.getElementById('toggleZeta');
+const sigmaEl = document.getElementById('sigma'), sigmaNum = document.getElementById('sigmaNum'), sigmaOut = document.getElementById('sigmaOut');
+const toggleSigma = document.getElementById('toggleSigma');
+const omegaEl = document.getElementById('omega'), omegaNum = document.getElementById('omegaNum'), omegaOut = document.getElementById('omegaOut');
+const toggleOmega = document.getElementById('toggleOmega');
+
+const POLE_COLORS = ['amber','cyan','white2'];
+const POLE_HEX = ['#FFB020','#45D9C8','#8A99A8'];
+const ZERO_COLORS = ['magenta','white2'];
+const ZERO_HEX = ['#F0629A','#8A99A8'];
+
+let poleVals = [0.9, 0.2, -0.3];
+let zeroVals = [-0.4, 0.6];
+let lastKcrit = null;
+
+function buildRows(){
+  const n = parseInt(numPolesEl.value);
+  const m = parseInt(numZerosEl.value);
+  poleRows.innerHTML = '';
+  for(let i=0;i<n;i++){
+    const div = document.createElement('div');
+    div.className = 'ctrl-group';
+    div.innerHTML = `
+      <div class="ctrl-head"><label for="p${i}">p${i+1} - polo real</label><span class="val ${POLE_COLORS[i]}" id="p${i}Out">${poleVals[i].toFixed(2)}</span></div>
+      <div class="ctrl-row">
+        <input type="range" id="p${i}" min="-0.99" max="1" step="0.01" value="${poleVals[i]}" style="--accent:${POLE_HEX[i]};">
+        <input type="number" id="p${i}Num" class="num-in" min="-0.99" max="1" step="0.01" value="${poleVals[i]}">
+      </div>`;
+    poleRows.appendChild(div);
+  }
+  zeroRows.innerHTML = '';
+  for(let i=0;i<m;i++){
+    const div = document.createElement('div');
+    div.className = 'ctrl-group';
+    div.innerHTML = `
+      <div class="ctrl-head"><label for="z${i}">z${i+1} - cero real</label><span class="val ${ZERO_COLORS[i]}" id="z${i}Out">${zeroVals[i].toFixed(2)}</span></div>
+      <div class="ctrl-row">
+        <input type="range" id="z${i}" min="-1.5" max="1.5" step="0.01" value="${zeroVals[i]}" style="--accent:${ZERO_HEX[i]};">
+        <input type="number" id="z${i}Num" class="num-in" min="-1.5" max="1.5" step="0.01" value="${zeroVals[i]}">
+      </div>`;
+    zeroRows.appendChild(div);
+  }
+  for(let i=0;i<n;i++){
+    const range = document.getElementById(`p${i}`), num = document.getElementById(`p${i}Num`), out = document.getElementById(`p${i}Out`);
+    range.addEventListener('input', ()=>{ poleVals[i]=parseFloat(range.value); num.value=range.value; out.textContent=poleVals[i].toFixed(2); lastKcrit=null; kcritBox.style.display='none'; render(); });
+    num.addEventListener('input', ()=>{
+      const v = parseFloat(num.value);
+      if(!isNaN(v)){ const c = Math.min(1,Math.max(-0.99,v)); range.value=c; poleVals[i]=c; out.textContent=c.toFixed(2); lastKcrit=null; kcritBox.style.display='none'; render(); }
+    });
+  }
+  for(let i=0;i<m;i++){
+    const range = document.getElementById(`z${i}`), num = document.getElementById(`z${i}Num`), out = document.getElementById(`z${i}Out`);
+    range.addEventListener('input', ()=>{ zeroVals[i]=parseFloat(range.value); num.value=range.value; out.textContent=zeroVals[i].toFixed(2); lastKcrit=null; kcritBox.style.display='none'; render(); });
+    num.addEventListener('input', ()=>{
+      const v = parseFloat(num.value);
+      if(!isNaN(v)){ const c = Math.min(1.5,Math.max(-1.5,v)); range.value=c; zeroVals[i]=c; out.textContent=c.toFixed(2); lastKcrit=null; kcritBox.style.display='none'; render(); }
+    });
+  }
+}
+
+numPolesEl.addEventListener('change', ()=>{
+  const n = parseInt(numPolesEl.value);
+  const zopts = numZerosEl.options;
+  for(let i=0;i<zopts.length;i++){ zopts[i].disabled = parseInt(zopts[i].value) > n; }
+  if(parseInt(numZerosEl.value) > n) numZerosEl.value = String(n);
+  lastKcrit = null; kcritBox.style.display='none';
+  buildRows(); render();
+});
+numZerosEl.addEventListener('change', ()=>{ lastKcrit=null; kcritBox.style.display='none'; buildRows(); render(); });
+
+function currentPoles(){ return poleVals.slice(0, parseInt(numPolesEl.value)); }
+function currentZeros(){ return zeroVals.slice(0, parseInt(numZerosEl.value)); }
+
+KEl.addEventListener('input', ()=>{ KNum.value = KEl.value; render(); });
+KNum.addEventListener('input', ()=>{
+  const v = parseFloat(KNum.value);
+  if(!isNaN(v)){ const c = Math.min(8,Math.max(0,v)); KEl.value=c; render(); }
+});
+[toggleRamas,toggleAsintota,toggleZeta,toggleSigma,toggleOmega].forEach(t=>t.addEventListener('change',render));
+
+zetaEl.addEventListener('input', ()=>{ zetaNum.value = zetaEl.value; zetaOut.textContent = parseFloat(zetaEl.value).toFixed(2); render(); });
+zetaNum.addEventListener('input', ()=>{
+  const v = parseFloat(zetaNum.value);
+  if(!isNaN(v)){ const c = Math.min(0.98,Math.max(0,v)); zetaEl.value=c; zetaOut.textContent=c.toFixed(2); render(); }
+});
+
+sigmaEl.addEventListener('input', ()=>{ sigmaNum.value = sigmaEl.value; sigmaOut.textContent = parseFloat(sigmaEl.value).toFixed(2); render(); });
+sigmaNum.addEventListener('input', ()=>{
+  const v = parseFloat(sigmaNum.value);
+  if(!isNaN(v)){ const c = Math.min(3,Math.max(-1,v)); sigmaEl.value=c; sigmaOut.textContent=c.toFixed(2); render(); }
+});
+
+omegaEl.addEventListener('input', ()=>{ omegaNum.value = omegaEl.value; omegaOut.textContent = parseFloat(omegaEl.value).toFixed(2); render(); });
+omegaNum.addEventListener('input', ()=>{
+  const v = parseFloat(omegaNum.value);
+  if(!isNaN(v)){ const c = Math.min(3.14,Math.max(0,v)); omegaEl.value=c; omegaOut.textContent=c.toFixed(2); render(); }
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-sing').style.display = btn.dataset.tab === 'sing' ? 'block' : 'none';
+    document.getElementById('tab-carac').style.display = btn.dataset.tab === 'carac' ? 'block' : 'none';
+  });
+});
+
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const themeLabel = document.getElementById('themeLabel');
+let theme = 'dark';
+function applyTheme(){
+  if(theme === 'light'){
+    document.documentElement.setAttribute('data-theme','light');
+    themeIcon.textContent = '☾'; themeLabel.textContent = 'Tema oscuro';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeIcon.textContent = '☀'; themeLabel.textContent = 'Tema claro';
+  }
+  render();
+}
+themeToggle.addEventListener('click', ()=>{ theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); });
+
+const zView = { half: 1.6 };
+
+function resizeCanvas(canvas){
+  const cssW = canvas.clientWidth;
+  const dpr = window.devicePixelRatio || 1;
+  const size = Math.round(cssW * dpr);
+  if(canvas.width !== size){ canvas.width = size; canvas.height = size; }
+}
+function zToPx(re, im, W, H){
+  const x = (re + zView.half) / (2*zView.half) * W;
+  const y = H - (im + zView.half) / (2*zView.half) * H;
+  return [x,y];
+}
+function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function fmt(n,d=3){ return (n<0?'−':'') + Math.abs(n).toFixed(d); }
+
+function polyFromRoots(roots){
+  let poly = [1];
+  for(const r of roots){
+    const np = new Array(poly.length+1).fill(0);
+    for(let i=0;i<poly.length;i++){ np[i] += -r*poly[i]; np[i+1] += poly[i]; }
+    poly = np;
+  }
+  return poly;
+}
+
+function solveCubicMonic(a2,a1,a0){
+  const p = a1 - a2*a2/3;
+  const q = (2*a2*a2*a2)/27 - (a2*a1)/3 + a0;
+  const off = a2/3;
+  const disc = (q*q)/4 + (p*p*p)/27;
+  const roots = [];
+  if(disc > 1e-9){
+    const sq = Math.sqrt(disc);
+    const u = Math.cbrt(-q/2 + sq), v = Math.cbrt(-q/2 - sq);
+    const t1 = u+v;
+    roots.push({re:t1-off, im:0});
+    const re2 = -t1/2-off, im2 = Math.sqrt(3)/2*(u-v);
+    roots.push({re:re2, im:im2});
+    roots.push({re:re2, im:-im2});
+  } else if(disc < -1e-9){
+    const r = Math.sqrt(-p*p*p/27);
+    const phi = Math.acos(Math.min(1,Math.max(-1,-q/(2*r))));
+    const mm = 2*Math.sqrt(-p/3);
+    for(let k=0;k<3;k++){ roots.push({re: mm*Math.cos(phi/3-2*Math.PI*k/3)-off, im:0}); }
+  } else {
+    const u = Math.cbrt(-q/2);
+    roots.push({re:2*u-off, im:0});
+    roots.push({re:-u-off, im:0});
+    roots.push({re:-u-off, im:0});
+  }
+  return roots;
+}
+
+function solvePoly(coeffs){
+  const n = coeffs.length-1;
+  const lead = coeffs[n];
+  const norm = coeffs.map(c=>c/lead);
+  if(n===1) return [{re:-norm[0], im:0}];
+  if(n===2){
+    const b=norm[1], c=norm[0];
+    const disc = b*b-4*c;
+    if(disc>=0){ const sq=Math.sqrt(disc); return [{re:(-b+sq)/2,im:0},{re:(-b-sq)/2,im:0}]; }
+    const sq=Math.sqrt(-disc); return [{re:-b/2,im:sq/2},{re:-b/2,im:-sq/2}];
+  }
+  if(n===3) return solveCubicMonic(norm[2],norm[1],norm[0]);
+  return [];
+}
+
+function charPoly(poles, zeros, K){
+  const D = polyFromRoots(poles);
+  const N = polyFromRoots(zeros);
+  const C = D.map((d,i) => d + K*(N[i] || 0));
+  return {C, N};
+}
+
+function closedLoopRoots(poles, zeros, K){
+  const {C} = charPoly(poles, zeros, K);
+  return solvePoly(C);
+}
+
+function computeTrackHint(y, kind, stable, marginal){
+  if(marginal) return 'oscilacion sostenida';
+  if(!stable) return 'diverge (sistema inestable)';
+  const steps = y.length;
+  const e = new Array(steps);
+  for(let k=0;k<steps;k++){
+    const xk = kind==='ramp' ? k : kind==='parabola' ? (k*k)/2 : 1;
+    e[k] = xk - y[k];
+  }
+  const eEnd = e[steps-1];
+  const eMid = e[Math.floor(steps*0.6)];
+  const growth = Math.abs(eEnd) - Math.abs(eMid);
+  if(!Number.isFinite(eEnd)) return 'error creciente: el sistema no puede seguir esta entrada';
+  if(Math.abs(growth) > 0.08*Math.max(1,Math.abs(eEnd)) && Math.abs(eEnd) > 0.05){
+    return 'error creciente: el sistema no puede seguir esta entrada';
+  }
+  if(Math.abs(eEnd) < 0.01) return 'sigue la entrada sin error';
+  return `error de estado estacionario ≈ ${eEnd.toFixed(3)}`;
+}
+
+function simulateResponse(poles, zeros, K, kind, steps){
+  const n = poles.length;
+  const {C, N} = charPoly(poles, zeros, K);
+  const a = [], b = [];
+  for(let j=0;j<=n;j++){ a.push(C[n-j]); b.push(K*(N[n-j] || 0)); }
+  const a0 = a[0];
+  const y = new Array(steps).fill(0);
+  for(let k=0;k<steps;k++){
+    let sum = 0;
+    for(let j=0;j<=n;j++){
+      const idx = k-j;
+      const xk = kind === 'ramp' ? (idx>=0 ? idx : 0) : kind === 'parabola' ? (idx>=0 ? (idx*idx)/2 : 0) : (idx>=0 ? 1 : 0);
+      sum += b[j]*xk;
+    }
+    for(let j=1;j<=n;j++){
+      const idx = k-j;
+      sum -= a[j] * (idx>=0 ? y[idx] : 0);
+    }
+    y[k] = sum/a0;
+  }
+  return y;
+}
+
+function resizeRectCanvas(canvas){
+  const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.round(cssW*dpr), h = Math.round(cssH*dpr);
+  if(canvas.width !== w || canvas.height !== h){ canvas.width = w; canvas.height = h; }
+}
+
+function drawResponse(ctx, y, W, H, dpr, color){
+  ctx.clearRect(0,0,W,H);
+  const steps = y.length;
+  const safeVals = y.map(v => Number.isFinite(v) ? Math.min(Math.abs(v), 1e6) : 1e6);
+  const maxAbs = Math.max(0.5, ...safeVals);
+  const scale = maxAbs*1.25;
+  const padL = 36*dpr, padR = 10*dpr, padT = 10*dpr, padB = 22*dpr;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const baseY = padT + plotH/2;
+  const toPxX = k => padL + (k/(steps-1))*plotW;
+  const toPxY = v => baseY - (Math.max(-scale,Math.min(scale,v))/scale)*(plotH/2);
+
+  ctx.strokeStyle = getCss('--grid'); ctx.lineWidth = 1;
+  [-1,-0.5,0.5,1].forEach(g=>{
+    const py = toPxY(g*scale);
+    ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(W-padR,py); ctx.stroke();
+  });
+  ctx.strokeStyle = getCss('--axis'); ctx.lineWidth = 1.2*dpr;
+  ctx.beginPath(); ctx.moveTo(padL,baseY); ctx.lineTo(W-padR,baseY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.stroke();
+
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.6*dpr;
+  for(let k=0;k<steps;k++){
+    const x = toPxX(k);
+    const py = toPxY(y[k]);
+    ctx.beginPath(); ctx.moveTo(x, baseY); ctx.lineTo(x, py); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,py,2.1*dpr,0,Math.PI*2); ctx.fill();
+  }
+
+  ctx.font = `500 ${9.5*dpr}px JetBrains Mono`;
+  ctx.fillStyle = getCss('--text-faint');
+  ctx.textAlign = 'right';
+  ctx.fillText(scale.toFixed(2), padL-6*dpr, toPxY(scale)+3*dpr);
+  ctx.fillText('0', padL-6*dpr, baseY+3*dpr);
+  ctx.fillText((-scale).toFixed(2), padL-6*dpr, toPxY(-scale)+3*dpr);
+  ctx.textAlign = 'center';
+  ctx.fillText('k=0', toPxX(0), H-6*dpr);
+  ctx.fillText('k='+(steps-1), toPxX(steps-1), H-6*dpr);
+  ctx.textAlign = 'left';
+}
+
+function drawContinuous(ctx, y, W, H, dpr, color){
+  ctx.clearRect(0,0,W,H);
+  const steps = y.length;
+  const safeVals = y.map(v => Number.isFinite(v) ? Math.min(Math.abs(v), 1e6) : 1e6);
+  const maxAbs = Math.max(0.5, ...safeVals);
+  const scale = maxAbs*1.25;
+  const padL = 36*dpr, padR = 10*dpr, padT = 10*dpr, padB = 22*dpr;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const baseY = padT + plotH/2;
+  const toPxX = k => padL + (k/(steps-1))*plotW;
+  const toPxY = v => baseY - (Math.max(-scale,Math.min(scale,v))/scale)*(plotH/2);
+
+  ctx.strokeStyle = getCss('--grid'); ctx.lineWidth = 1;
+  [-1,-0.5,0.5,1].forEach(g=>{
+    const py = toPxY(g*scale);
+    ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(W-padR,py); ctx.stroke();
+  });
+  ctx.strokeStyle = getCss('--axis'); ctx.lineWidth = 1.2*dpr;
+  ctx.beginPath(); ctx.moveTo(padL,baseY); ctx.lineTo(W-padR,baseY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.stroke();
+
+  const pts = (k)=>{
+    const kc = Math.max(0, Math.min(steps-1, k));
+    return y[Math.round(kc)];
+  };
+  const sub = 12;
+  ctx.strokeStyle = color; ctx.lineWidth = 2*dpr; ctx.beginPath();
+  for(let k=0;k<steps-1;k++){
+    const p0 = pts(k-1), p1 = pts(k), p2 = pts(k+1), p3 = pts(k+2);
+    for(let s=0;s<=sub;s++){
+      const t = s/sub;
+      const t2=t*t, t3=t2*t;
+      const val = 0.5*((2*p1) + (-p0+p2)*t + (2*p0-5*p1+4*p2-p3)*t2 + (-p0+3*p1-3*p2+p3)*t3);
+      const x = toPxX(k+t);
+      const py = toPxY(val);
+      if(k===0 && s===0) ctx.moveTo(x,py); else ctx.lineTo(x,py);
+    }
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  for(let k=0;k<steps;k+=Math.max(1,Math.floor(steps/20))){
+    const x = toPxX(k), py = toPxY(y[k]);
+    ctx.beginPath(); ctx.arc(x,py,1.6*dpr,0,Math.PI*2); ctx.fill();
+  }
+
+  ctx.font = `500 ${9.5*dpr}px JetBrains Mono`;
+  ctx.fillStyle = getCss('--text-faint');
+  ctx.textAlign = 'right';
+  ctx.fillText(scale.toFixed(2), padL-6*dpr, toPxY(scale)+3*dpr);
+  ctx.fillText('0', padL-6*dpr, baseY+3*dpr);
+  ctx.fillText((-scale).toFixed(2), padL-6*dpr, toPxY(-scale)+3*dpr);
+  ctx.textAlign = 'center';
+  ctx.fillText('t=0', toPxX(0), H-6*dpr);
+  ctx.fillText('t=fin', toPxX(steps-1), H-6*dpr);
+  ctx.textAlign = 'left';
+}
+
+function maxModAt(poles, zeros, K){
+  const roots = closedLoopRoots(poles, zeros, K);
+  return Math.max(...roots.map(r=>Math.sqrt(r.re*r.re+r.im*r.im)));
+}
+
+function findKcritGeneric(poles, zeros){
+  const step = 0.02, Kmax = 30;
+  let prevK = 0, prevMax = maxModAt(poles, zeros, 0);
+  for(let K=step; K<=Kmax; K+=step){
+    const mm = maxModAt(poles, zeros, K);
+    if(prevMax < 1 && mm >= 1){
+      let lo=prevK, hi=K;
+      for(let it=0; it<60; it++){
+        const mid=(lo+hi)/2;
+        if(maxModAt(poles,zeros,mid) < 1) lo=mid; else hi=mid;
+      }
+      const Kc = (lo+hi)/2;
+      const roots = closedLoopRoots(poles, zeros, Kc);
+      let best = roots[0];
+      for(const r of roots){
+        if(Math.sqrt(r.re*r.re+r.im*r.im) > Math.sqrt(best.re*best.re+best.im*best.im)) best = r;
+      }
+      return {K:Kc, a:best.re, b:best.im};
+    }
+    prevK = K; prevMax = mm;
+  }
+  return null;
+}
+
+kcritBtn.addEventListener('click', ()=>{
+  const poles = currentPoles(), zeros = currentZeros();
+  const res = findKcritGeneric(poles, zeros);
+  if(!res){
+    kcritBox.style.display='block';
+    kcritBox.innerHTML = 'No se encontro un cruce con el circulo unitario hasta K=30 para esta configuracion.';
+    return;
+  }
+  const zStr = Math.abs(res.b)<1e-4 ? fmt(res.a,3) : `${fmt(res.a,3)} ${res.b>=0?'+':'−'} j${Math.abs(res.b).toFixed(3)}`;
+  const distP = poles.map(p=>Math.sqrt((res.a-p)*(res.a-p)+res.b*res.b));
+  const distZ = zeros.map(z=>Math.sqrt((res.a-z)*(res.a-z)+res.b*res.b));
+  const numStr = distP.map(d=>d.toFixed(3)).join(' · ') || '1';
+  const denStr = distZ.map(d=>d.toFixed(3)).join(' · ') || '1';
+  kcritBox.style.display='block';
+  kcritBox.innerHTML = `
+    <div class="line"><span>Punto de cruce z</span><span class="v">${zStr}</span></div>
+    <div class="line"><span>K critico</span><span class="v">${res.K.toFixed(4)}</span></div>
+    <div class="formula">Criterio del modulo: K = (${numStr}) / (${denStr})</div>
+  `;
+  lastKcrit = res;
+  KEl.value = res.K.toFixed(2); KNum.value = res.K.toFixed(2);
+  render();
+});
+
+function factorStr(roots){
+  if(roots.length === 0) return '1';
+  return roots.map(v=>{
+    const sign = v>=0 ? '−' : '+';
+    return `(z ${sign} ${Math.abs(v).toFixed(2)})`;
+  }).join('');
+}
+
+function polyStr(coeffsAsc){
+  const n = coeffsAsc.length-1;
+  const parts = [];
+  for(let i=n;i>=0;i--){
+    const c = coeffsAsc[i];
+    if(Math.abs(c) < 1e-9) continue;
+    const sign = c>=0 ? '+' : '−';
+    const coefAbs = Math.abs(c).toFixed(2);
+    let varPart = '';
+    if(i===1) varPart = 'z';
+    else if(i===2) varPart = 'z²';
+    else if(i===3) varPart = 'z³';
+    const termStr = i===0 ? coefAbs : (coefAbs === '1.00' ? varPart : `${coefAbs}${varPart}`);
+    parts.push({sign, termStr});
+  }
+  if(parts.length === 0) return '0';
+  let out = (parts[0].sign === '−' ? '−' : '') + parts[0].termStr;
+  for(let i=1;i<parts.length;i++) out += ` ${parts[i].sign} ${parts[i].termStr}`;
+  return out;
+}
+
+function updateEquations(poles, zeros, K){
+  const kStr = K.toFixed(2);
+  const numFactored = zeros.length ? `${kStr}${factorStr(zeros)}` : kStr;
+  const denFactored = factorStr(poles);
+  document.getElementById('eqGzNum').textContent = numFactored;
+  document.getElementById('eqGzDen').textContent = denFactored;
+
+  const {C} = charPoly(poles, zeros, K);
+  const denExpanded = polyStr(C);
+  document.getElementById('eqCzNum').textContent = numFactored;
+  document.getElementById('eqCzDen').textContent = denExpanded;
+}
+
+function drawGrid(ctx,W,H){
+  ctx.clearRect(0,0,W,H);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = getCss('--grid');
+  const dpr = window.devicePixelRatio || 1;
+  for(let g=Math.ceil(-zView.half); g<=zView.half; g+=0.5){
+    const [x] = zToPx(g,0,W,H);
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    const [,y] = zToPx(0,g,W,H);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  const [cx,cy] = zToPx(0,0,W,H);
+  const r = zToPx(1,0,W,H)[0]-cx;
+  ctx.save();
+  ctx.shadowColor = getCss('--circle-glow'); ctx.shadowBlur = 8*dpr;
+  ctx.strokeStyle = getCss('--white'); ctx.lineWidth = 2.4*dpr;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle = getCss('--axis'); ctx.lineWidth = 1.4*dpr;
+  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+
+  ctx.font = `600 ${10.5*dpr}px JetBrains Mono`;
+  ctx.fillStyle = getCss('--text-faint');
+  ctx.textAlign = 'center';
+  for(let g=Math.ceil(-zView.half*2)/2; g<=zView.half; g+=0.5){
+    if(Math.abs(g) < 1e-6) continue;
+    const [tx] = zToPx(g,0,W,H);
+    ctx.fillText(fmt(g,1), tx, cy+16*dpr);
+    const [,ty] = zToPx(0,g,W,H);
+    ctx.textAlign = 'right';
+    ctx.fillText(fmt(g,1), cx-8*dpr, ty+4*dpr);
+    ctx.textAlign = 'center';
+  }
+  ctx.textAlign = 'left';
+  ctx.fillStyle = getCss('--text-dim');
+  ctx.fillText('0', cx+6*dpr, cy+16*dpr);
+
+  ctx.font = `700 ${14*dpr}px Space Grotesk`;
+  ctx.fillStyle = getCss('--text-dim');
+  ctx.fillText('Re', W-28*dpr, cy-10*dpr);
+  ctx.fillText('Im', cx+10*dpr, 18*dpr);
+  ctx.font = `600 ${11*dpr}px JetBrains Mono`;
+  ctx.fillStyle = getCss('--text-faint');
+  ctx.fillText('|z| = 1', cx + r*0.66, cy - r*0.66);
+  const [r1x] = zToPx(1,0,W,H);
+  ctx.fillStyle = getCss('--text-dim');
+  ctx.textAlign = 'center';
+  ctx.fillText('r=1', r1x, cy+16*dpr);
+  ctx.textAlign = 'left';
+  return [cx,cy,r];
+}
+
+function renderRamasSweep(ctx, poles, zeros, W, H, dpr){
+  const n = poles.length, m = zeros.length;
+  ctx.fillStyle = getCss('--violet');
+  const steps = 500, Kmax = 12;
+  for(let i=0; i<=steps; i++){
+    const K = (i/steps)*Kmax;
+    const roots = closedLoopRoots(poles, zeros, K);
+    for(const r of roots){
+      if(Math.abs(r.re) > zView.half*1.05 || Math.abs(r.im) > zView.half*1.05) continue;
+      const [x,y] = zToPx(r.re, r.im, W, H);
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath(); ctx.arc(x,y,1.5*dpr,0,Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function renderSigmaCircle(ctx, sigma, W, H, dpr){
+  const T = 1;
+  const r = Math.exp(-sigma*T);
+  const [cx,cy] = zToPx(0,0,W,H);
+  const rr = zToPx(r,0,W,H)[0]-cx;
+  ctx.strokeStyle = '#5AA9E6';
+  ctx.lineWidth = 2.2*dpr;
+  ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function renderOmegaLine(ctx, omega, W, H, dpr){
+  const T = 1;
+  const theta = omega*T;
+  const L = zView.half*1.5;
+  ctx.strokeStyle = '#FF8B5E';
+  ctx.lineWidth = 2.2*dpr;
+  ctx.setLineDash([5,4]);
+  [1,-1].forEach(sign=>{
+    const [x1,y1] = zToPx(0,0,W,H);
+    const [x2,y2] = zToPx(L*Math.cos(theta*sign), L*Math.sin(theta*sign), W, H);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+}
+
+function renderZetaSpiral(ctx, zeta, W, H, dpr){
+  const T = 1;
+  const wnMax = 9;
+  const steps = 260;
+  ctx.strokeStyle = '#5FD3A2';
+  ctx.lineWidth = 2.2*dpr;
+  ctx.setLineDash([5,4]);
+  [1,-1].forEach(sign=>{
+    ctx.beginPath();
+    let started = false;
+    for(let i=0;i<=steps;i++){
+      const wn = (i/steps)*wnMax;
+      const sr = -zeta*wn;
+      const si = sign*Math.sqrt(Math.max(0,1-zeta*zeta))*wn;
+      const re = Math.exp(sr*T)*Math.cos(si*T);
+      const im = Math.exp(sr*T)*Math.sin(si*T);
+      const [x,y] = zToPx(re,im,W,H);
+      if(!started){ ctx.moveTo(x,y); started = true; } else { ctx.lineTo(x,y); }
+    }
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+}
+
+function renderAsintotas(ctx, poles, zeros, W, H, dpr){
+  const n = poles.length, m = zeros.length;
+  const count = n-m;
+  if(count <= 0) return;
+  const centroid = (poles.reduce((a,b)=>a+b,0) - zeros.reduce((a,b)=>a+b,0)) / count;
+  ctx.strokeStyle = getCss('--amber'); ctx.lineWidth = 2*dpr; ctx.setLineDash([3,5]);
+  for(let k=0;k<count;k++){
+    const theta = (2*k+1)*Math.PI/count;
+    const [cx1,cy1] = zToPx(centroid,0,W,H);
+    const L = zView.half*3;
+    const [cx2,cy2] = zToPx(centroid+L*Math.cos(theta), L*Math.sin(theta), W, H);
+    ctx.beginPath(); ctx.moveTo(cx1,cy1); ctx.lineTo(cx2,cy2); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+function render(){
+  const poles = currentPoles(), zeros = currentZeros();
+  const K = parseFloat(KEl.value);
+  document.getElementById('KOut').textContent = K.toFixed(2);
+
+  resizeCanvas(zCanvas);
+  const W = zCanvas.width, H = zCanvas.height;
+  const dpr = window.devicePixelRatio || 1;
+  drawGrid(zCtx,W,H);
+
+  if(toggleRamas.checked) renderRamasSweep(zCtx,poles,zeros,W,H,dpr);
+  if(toggleAsintota.checked) renderAsintotas(zCtx,poles,zeros,W,H,dpr);
+  if(toggleZeta.checked) renderZetaSpiral(zCtx, parseFloat(zetaEl.value), W, H, dpr);
+  if(toggleSigma.checked) renderSigmaCircle(zCtx, parseFloat(sigmaEl.value), W, H, dpr);
+  if(toggleOmega.checked) renderOmegaLine(zCtx, parseFloat(omegaEl.value), W, H, dpr);
+
+  zeros.forEach((z,i)=>{
+    const [x,y] = zToPx(z,0,W,H);
+    zCtx.strokeStyle = ZERO_HEX[i];
+    zCtx.lineWidth = 2.4*dpr;
+    zCtx.beginPath(); zCtx.arc(x,y,8*dpr,0,Math.PI*2); zCtx.stroke();
+    zCtx.fillStyle = ZERO_HEX[i];
+    zCtx.font = `600 ${11*dpr}px JetBrains Mono`;
+    zCtx.textAlign = 'center';
+    zCtx.fillText(`z${i+1}=${fmt(z,2)}`, x, y-18*dpr);
+    zCtx.textAlign = 'left';
+  });
+
+  const roots = closedLoopRoots(poles, zeros, K);
+  const mods = roots.map(r=>Math.sqrt(r.re*r.re+r.im*r.im));
+  const maxMod = Math.max(...mods);
+  const EPS = 0.004;
+  const marginal = Math.abs(maxMod-1) <= EPS;
+  const stable = !marginal && maxMod < 1;
+
+  roots.forEach(r=>{
+    const [x,y] = zToPx(r.re,r.im,W,H);
+    const col = marginal ? getCss('--amber') : (stable ? getCss('--cyan') : getCss('--magenta'));
+    zCtx.fillStyle = col;
+    zCtx.strokeStyle = getCss('--point-halo'); zCtx.lineWidth = 7*dpr;
+    zCtx.beginPath(); zCtx.arc(x,y,8*dpr,0,Math.PI*2); zCtx.stroke();
+    zCtx.beginPath(); zCtx.arc(x,y,4.5*dpr,0,Math.PI*2); zCtx.fill();
+    zCtx.font = `600 ${10*dpr}px JetBrains Mono`;
+    zCtx.textAlign = 'center';
+    const lbl = Math.abs(r.im)<1e-4 ? fmt(r.re,2) : `${fmt(r.re,2)}${r.im>=0?'+':'−'}j${Math.abs(r.im).toFixed(2)}`;
+    zCtx.fillText(lbl, x, y-14*dpr);
+    zCtx.textAlign = 'left';
+  });
+
+  if(lastKcrit){
+    const [kx,ky] = zToPx(lastKcrit.a, lastKcrit.b, W, H);
+    zCtx.strokeStyle = getCss('--violet'); zCtx.lineWidth = 2*dpr;
+    zCtx.beginPath(); zCtx.arc(kx,ky,10*dpr,0,Math.PI*2); zCtx.stroke();
+    zCtx.fillStyle = getCss('--violet');
+    zCtx.font = `600 ${11*dpr}px JetBrains Mono`;
+    zCtx.textAlign = 'center';
+    const zStr = Math.abs(lastKcrit.b)<1e-4 ? fmt(lastKcrit.a,3) : `${fmt(lastKcrit.a,3)}${lastKcrit.b>=0?'+':'−'}j${Math.abs(lastKcrit.b).toFixed(3)}`;
+    zCtx.fillText(`Kcrit: z=${zStr}`, kx, ky+24*dpr);
+    zCtx.textAlign = 'left';
+    if(Math.abs(lastKcrit.b) > 1e-4){
+      const [kx2,ky2] = zToPx(lastKcrit.a, -lastKcrit.b, W, H);
+      zCtx.beginPath(); zCtx.arc(kx2,ky2,10*dpr,0,Math.PI*2); zCtx.stroke();
+    }
+  }
+
+  document.getElementById('polesVal').textContent = roots.map(r=>
+    Math.abs(r.im)<1e-4 ? fmt(r.re,3) : `${fmt(r.re,3)} ${r.im>=0?'+':'−'} j${Math.abs(r.im).toFixed(3)}`
+  ).join('  ,  ');
+  document.getElementById('stabHint').textContent = marginal ? 'sobre el circulo unitario' : (stable ? 'dentro del circulo unitario' : 'fuera del circulo unitario');
+
+  const rootsStatus = document.getElementById('rootsStatus');
+  rootsStatus.innerHTML = roots.map((r,i)=>{
+    const s = Math.abs(r.im)<1e-4 ? fmt(r.re,4) : `${fmt(r.re,4)} ${r.im>=0?'+':'−'} j${Math.abs(r.im).toFixed(4)}`;
+    return `<div class="stat-row"><span class="k">Polo lazo cerrado ${i+1}</span><span class="v">${s}</span></div>`;
+  }).join('');
+
+  document.getElementById('statMaxMod').textContent = maxMod.toFixed(4);
+  const badge = document.getElementById('stabBadge');
+  badge.textContent = marginal ? 'Marginalmente estable' : (stable ? 'Estable' : 'Inestable');
+  badge.className = 'strip-badge ' + (marginal ? 'marg' : (stable ? 'ok' : 'bad'));
+
+  updateEquations(poles, zeros, K);
+
+  const respColor = marginal ? getCss('--amber') : (stable ? getCss('--cyan') : getCss('--magenta'));
+
+  resizeRectCanvas(discreteCanvas);
+  const respY = simulateResponse(poles, zeros, K, inputKind, 60);
+  drawResponse(discreteCtx, respY, discreteCanvas.width, discreteCanvas.height, dpr, respColor);
+  const lastVal = respY[respY.length-1];
+  document.getElementById('discreteFinal').textContent = Number.isFinite(lastVal) ? lastVal.toFixed(3) : '—';
+  document.getElementById('discreteHint').textContent = computeTrackHint(respY, inputKind, stable, marginal);
+
+  resizeRectCanvas(continuousCanvas);
+  drawContinuous(continuousCtx, respY, continuousCanvas.width, continuousCanvas.height, dpr, respColor);
+  document.getElementById('continuousFinal').textContent = Number.isFinite(lastVal) ? lastVal.toFixed(3) : '—';
+  document.getElementById('continuousHint').textContent = computeTrackHint(respY, inputKind, stable, marginal);
+}
+
+buildRows();
+window.addEventListener('resize', render);
+window.addEventListener('load', applyTheme);
+applyTheme();
+</script>
+</body>
+</html>
